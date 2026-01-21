@@ -1,1 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>2D Mining Game</title>
+<style>
+  body {
+    background: #111;
+    color: white;
+    font-family: monospace;
+    text-align: center;
+  }
+
+  canvas {
+    background: #222;
+    border: 3px solid #555;
+    cursor: crosshair;
+  }
+
+  #inventory {
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+
+<h1>⛏️ 2D Mining Game</h1>
+<p>Move: WASD / Arrows | Click blocks to mine</p>
+
+<canvas id="game" width="400" height="400"></canvas>
+
+<div id="inventory">
+  🪨 Stone: <span id="stone">0</span> |
+  🟫 Dirt: <span id="dirt">0</span> |
+  💰 Gold: <span id="gold">0</span>
+</div>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const TILE = 40;
+const MAP_SIZE = 10;
+
+const inventory = { stone: 0, dirt: 0, gold: 0 };
+
+const colors = {
+  dirt: "#7a5230",
+  stone: "#888",
+  gold: "#f4c430",
+  air: "#222"
+};
+
+// Generate world
+const world = [];
+for (let y = 0; y < MAP_SIZE; y++) {
+  world[y] = [];
+  for (let x = 0; x < MAP_SIZE; x++) {
+    let block = "stone";
+    if (y < 2) block = "dirt";
+    if (Math.random() < 0.1 && y > 3) block = "gold";
+    world[y][x] = block;
+  }
+}
+
+const player = { x: 5, y: 1 };
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  for (let y = 0; y < MAP_SIZE; y++) {
+    for (let x = 0; x < MAP_SIZE; x++) {
+      ctx.fillStyle = colors[world[y][x]];
+      ctx.fillRect(x * TILE, y * TILE, TILE, TILE);
+      ctx.strokeStyle = "#111";
+      ctx.strokeRect(x * TILE, y * TILE, TILE, TILE);
+    }
+  }
+
+  // Player
+  ctx.fillStyle = "red";
+  ctx.fillRect(player.x * TILE + 10, player.y * TILE + 10, 20, 20);
+}
+
+function updateInventory() {
+  stone.textContent = inventory.stone;
+  dirt.textContent = inventory.dirt;
+  gold.textContent = inventory.gold;
+}
+
+// Movement
+document.addEventListener("keydown", e => {
+  const moves = {
+    ArrowUp: [0, -1], ArrowDown: [0, 1],
+    ArrowLeft: [-1, 0], ArrowRight: [1, 0],
+    w: [0, -1], s: [0, 1],
+    a: [-1, 0], d: [1, 0]
+  };
+
+  if (moves[e.key]) {
+    const [dx, dy] = moves[e.key];
+    const nx = player.x + dx;
+    const ny = player.y + dy;
+
+    if (
+      nx >= 0 && nx < MAP_SIZE &&
+      ny >= 0 && ny < MAP_SIZE &&
+      world[ny][nx] === "air"
+    ) {
+      player.x = nx;
+      player.y = ny;
+    }
+  }
+});
+
+// Mining
+canvas.addEventListener("click", e => {
+  const rect = canvas.getBoundingClientRect();
+  const x = Math.floor((e.clientX - rect.left) / TILE);
+  const y = Math.floor((e.clientY - rect.top) / TILE);
+
+  const block = world[y][x];
+  if (block !== "air") {
+    inventory[block]++;
+    world[y][x] = "air";
+    updateInventory();
+  }
+});
+
+draw();
+setInterval(draw, 100);
+</script>
+
+</body>
+</html>
 
